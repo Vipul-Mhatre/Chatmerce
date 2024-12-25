@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import axios from '../services/api';
+import { loginUser } from '../services/api'; // Correct relative import
+
 
 function Login() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('/login', { username, password });
-      alert(response.data.message);
+      const response = await loginUser(email, password); // Use the exported function
+      alert(response.message);
     } catch (error) {
-      alert('Login failed: ' + error.response.data.message);
+      alert('Login failed: ' + error.message);
     }
   };
 
@@ -19,9 +20,9 @@ function Login() {
       <h2>Login</h2>
       <input
         type="text"
-        placeholder="Username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
       />
       <input
         type="password"

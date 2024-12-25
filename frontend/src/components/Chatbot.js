@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from '../services/api'; // Adjust the path if needed
+import { getChatbotResponse } from '../services/api'; // Correct relative import
 
 function Chatbot() {
   const [query, setQuery] = useState('');
@@ -7,10 +7,10 @@ function Chatbot() {
 
   const handleSearch = async () => {
     try {
-      const response = await axios.get(`/products?query=${query}`);
-      setMessages(response.data);
+      const response = await getChatbotResponse(query); // Use the exported function
+      setMessages(response);
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error('Error fetching chatbot response:', error);
     }
   };
 
@@ -19,16 +19,16 @@ function Chatbot() {
       <h2>Chatbot</h2>
       <div>
         {messages.map((msg, index) => (
-          <div key={index}>{msg.name} - ${msg.price}</div>
+          <div key={index}>{msg}</div>
         ))}
       </div>
       <input
         type="text"
-        placeholder="Search products..."
+        placeholder="Ask me something..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
-      <button onClick={handleSearch}>Search</button>
+      <button onClick={handleSearch}>Send</button>
     </div>
   );
 }

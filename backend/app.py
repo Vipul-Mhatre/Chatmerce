@@ -1,28 +1,31 @@
-from flask import Flask, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, request, jsonify
 from flask_cors import CORS
+import pickle
+import nltk
+from nltk.stem import WordNetLemmatizer
 
 app = Flask(__name__)
 CORS(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
 
-# Import models after initializing `db`
-import models
+with open('models/chatbot_pipeline.pkl', 'rb') as model_file:
+    pipeline = pickle.load(model_file)
 
-@app.route('/products', methods=['GET'])
-def get_products():
-    query = request.args.get('query', '')
-    products = models.Product.query.filter(models.Product.name.contains(query)).all()
-    return jsonify([product.to_dict() for product in products])
+with open('models/chatbot_responses.pkl', 'rb') as response_file:
+    responses = pickle.load(response_file)
 
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.json
-    if data['username'] == 'admin' and data['password'] == 'admin':
-        return jsonify({'success': True, 'message': 'Login successful'})
-    return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+lemmatizer = WordNetLemmatizer()
+
+@app.route('/chatbot', methods=['POST'])
+def chatbot():
+    user_message = request.json.get('message', '').strip()
+    if not user_message:
+        return jsonify({'response': "Please provide a message."})
+
+    lemmatized_message = " ".join([lemmatizer.lemmatize(word) for word in nltk.word_tokenize(user_message.lower())])
+    tag = pipeline.predict([lemmatized_message])[0]
+
+    reply = random.choice(responses.get(tag, responses['out_of_context']))
+    return jsonify({'response': reply})
 
 if __name__ == '__main__':
     app.run(debug=True)
